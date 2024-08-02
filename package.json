@@ -9,10 +9,11 @@
   "packageManager": "pnpm@9.6.0",
   "scripts": {
     "preinstall": "node scripts/block-npm-install.js",
-    "build": "turbo run build mkdir -p public && cp -r src/* public/",
+    "build": "turbo run build && npm run postbuild",
     "build:backend": "turbo run build:backend",
     "build:frontend": "turbo run build:frontend",
     "build:nodes": "turbo run build:nodes",
+    "postbuild": "mkdir -p public && cp -r packages/cli/bin/* public/"
     "typecheck": "turbo typecheck",
     "dev": "turbo run dev --parallel --env-mode=loose --filter=!n8n-design-system --filter=!@n8n/chat",
     "dev:ai": "turbo run dev --parallel --env-mode=loose --filter=@n8n/nodes-langchain --filter=n8n --filter=n8n-core",
