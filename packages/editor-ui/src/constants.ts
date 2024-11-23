@@ -1,10 +1,16 @@
 import type {
 	EnterpriseEditionFeatureKey,
 	EnterpriseEditionFeatureValue,
+	INodeUi,
+	IWorkflowDataCreate,
 	NodeCreatorOpenSource,
 } from './Interface';
 import { NodeConnectionType } from 'n8n-workflow';
-import type { CanvasNodeHandleInjectionData, CanvasNodeInjectionData } from '@/types';
+import type {
+	CanvasInjectionData,
+	CanvasNodeHandleInjectionData,
+	CanvasNodeInjectionData,
+} from '@/types';
 import type { InjectionKey } from 'vue';
 
 export const MAX_WORKFLOW_SIZE = 1024 * 1024 * 16; // Workflow size limit in bytes
@@ -44,9 +50,9 @@ export const DELETE_USER_MODAL_KEY = 'deleteUser';
 export const INVITE_USER_MODAL_KEY = 'inviteUser';
 export const DUPLICATE_MODAL_KEY = 'duplicate';
 export const TAGS_MANAGER_MODAL_KEY = 'tagsManager';
+export const ANNOTATION_TAGS_MANAGER_MODAL_KEY = 'annotationTagsManager';
 export const VERSIONS_MODAL_KEY = 'versions';
 export const WORKFLOW_SETTINGS_MODAL_KEY = 'settings';
-export const WORKFLOW_LM_CHAT_MODAL_KEY = 'lmChat';
 export const WORKFLOW_SHARE_MODAL_KEY = 'workflowShare';
 export const PERSONALIZATION_MODAL_KEY = 'personalization';
 export const CONTACT_PROMPT_MODAL_KEY = 'contactPrompt';
@@ -60,12 +66,13 @@ export const SOURCE_CONTROL_PUSH_MODAL_KEY = 'sourceControlPush';
 export const SOURCE_CONTROL_PULL_MODAL_KEY = 'sourceControlPull';
 export const DEBUG_PAYWALL_MODAL_KEY = 'debugPaywall';
 export const MFA_SETUP_MODAL_KEY = 'mfaSetup';
+export const PROMPT_MFA_CODE_MODAL_KEY = 'promptMfaCode';
 export const WORKFLOW_HISTORY_VERSION_RESTORE = 'workflowHistoryVersionRestore';
 export const SETUP_CREDENTIALS_MODAL_KEY = 'setupCredentials';
 export const PROJECT_MOVE_RESOURCE_MODAL = 'projectMoveResourceModal';
-export const PROJECT_MOVE_RESOURCE_CONFIRM_MODAL = 'projectMoveResourceConfirmModal';
-
+export const NEW_ASSISTANT_SESSION_MODAL = 'newAssistantSession';
 export const EXTERNAL_SECRETS_PROVIDER_MODAL_KEY = 'externalSecretsProvider';
+export const COMMUNITY_PLUS_ENROLLMENT_MODAL = 'communityPlusEnrollment';
 
 export const COMMUNITY_PACKAGE_MANAGE_ACTIONS = {
 	UNINSTALL: 'uninstall',
@@ -92,9 +99,6 @@ export const NPM_KEYWORD_SEARCH_URL =
 	'https://www.npmjs.com/search?q=keywords%3An8n-community-node-package';
 export const N8N_QUEUE_MODE_DOCS_URL = `https://${DOCS_DOMAIN}/hosting/scaling/queue-mode/`;
 export const COMMUNITY_NODES_INSTALLATION_DOCS_URL = `https://${DOCS_DOMAIN}/integrations/community-nodes/installation/gui-install/`;
-export const COMMUNITY_NODES_MANUAL_INSTALLATION_DOCS_URL = `https://${DOCS_DOMAIN}/integrations/community-nodes/installation/manual-install/`;
-export const COMMUNITY_NODES_NPM_INSTALLATION_URL =
-	'https://docs.npmjs.com/downloading-and-installing-node-js-and-npm';
 export const COMMUNITY_NODES_RISKS_DOCS_URL = `https://${DOCS_DOMAIN}/integrations/community-nodes/risks/`;
 export const COMMUNITY_NODES_BLOCKLIST_DOCS_URL = `https://${DOCS_DOMAIN}/integrations/community-nodes/blocklist/`;
 export const CUSTOM_NODES_DOCS_URL = `https://${DOCS_DOMAIN}/integrations/creating-nodes/code/create-n8n-nodes-module/`;
@@ -191,6 +195,11 @@ export const CHAIN_SUMMARIZATION_LANGCHAIN_NODE_TYPE =
 	'@n8n/n8n-nodes-langchain.chainSummarization';
 export const SIMULATE_NODE_TYPE = 'n8n-nodes-base.simulate';
 export const SIMULATE_TRIGGER_NODE_TYPE = 'n8n-nodes-base.simulateTrigger';
+export const AI_TRANSFORM_NODE_TYPE = 'n8n-nodes-base.aiTransform';
+export const FORM_NODE_TYPE = 'n8n-nodes-base.form';
+export const SLACK_TRIGGER_NODE_TYPE = 'n8n-nodes-base.slackTrigger';
+export const TELEGRAM_TRIGGER_NODE_TYPE = 'n8n-nodes-base.telegramTrigger';
+export const FACEBOOK_LEAD_ADS_TRIGGER_NODE_TYPE = 'n8n-nodes-base.facebookLeadAdsTrigger';
 
 export const CREDENTIAL_ONLY_NODE_PREFIX = 'n8n-creds-base';
 export const CREDENTIAL_ONLY_HTTP_NODE_VERSION = 4.1;
@@ -210,7 +219,13 @@ export const NON_ACTIVATABLE_TRIGGER_NODE_TYPES = [
 	MANUAL_CHAT_TRIGGER_NODE_TYPE,
 ];
 
-export const NODES_USING_CODE_NODE_EDITOR = [CODE_NODE_TYPE, AI_CODE_NODE_TYPE];
+export const NODES_USING_CODE_NODE_EDITOR = [
+	CODE_NODE_TYPE,
+	AI_CODE_NODE_TYPE,
+	AI_TRANSFORM_NODE_TYPE,
+];
+
+export const NODE_POSITION_CONFLICT_ALLOWLIST = [STICKY_NODE_TYPE];
 
 export const PIN_DATA_NODE_TYPES_DENYLIST = [SPLIT_IN_BATCHES_NODE_TYPE, STICKY_NODE_TYPE];
 
@@ -219,6 +234,14 @@ export const OPEN_URL_PANEL_TRIGGER_NODE_TYPES = [
 	FORM_TRIGGER_NODE_TYPE,
 	CHAT_TRIGGER_NODE_TYPE,
 ];
+
+export const SINGLE_WEBHOOK_TRIGGERS = [
+	TELEGRAM_TRIGGER_NODE_TYPE,
+	SLACK_TRIGGER_NODE_TYPE,
+	FACEBOOK_LEAD_ADS_TRIGGER_NODE_TYPE,
+];
+
+export const LIST_LIKE_NODE_OPERATIONS = ['getAll', 'getMany', 'read', 'search'];
 
 export const PRODUCTION_ONLY_TRIGGER_NODE_TYPES = [CHAT_TRIGGER_NODE_TYPE];
 
@@ -414,6 +437,7 @@ export const LOCAL_STORAGE_MAIN_PANEL_RELATIVE_WIDTH = 'N8N_MAIN_PANEL_RELATIVE_
 export const LOCAL_STORAGE_ACTIVE_MODAL = 'N8N_ACTIVE_MODAL';
 export const LOCAL_STORAGE_THEME = 'N8N_THEME';
 export const LOCAL_STORAGE_EXPERIMENT_OVERRIDES = 'N8N_EXPERIMENT_OVERRIDES';
+export const LOCAL_STORAGE_HIDE_GITHUB_STAR_BUTTON = 'N8N_HIDE_HIDE_GITHUB_STAR_BUTTON';
 export const BASE_NODE_SURVEY_URL = 'https://n8n-community.typeform.com/to/BvmzxqYv#nodename=';
 
 export const HIRING_BANNER = `
@@ -468,7 +492,6 @@ export const enum VIEWS {
 	PERSONAL_SETTINGS = 'PersonalSettings',
 	API_SETTINGS = 'APISettings',
 	NOT_FOUND = 'NotFoundView',
-	FAKE_DOOR = 'ComingSoon',
 	COMMUNITY_NODES = 'CommunityNodes',
 	WORKFLOWS = 'WorkflowsView',
 	WORKFLOW_EXECUTIONS = 'WorkflowExecutions',
@@ -485,15 +508,10 @@ export const enum VIEWS {
 	PROJECTS_WORKFLOWS = 'ProjectsWorkflows',
 	PROJECTS_CREDENTIALS = 'ProjectsCredentials',
 	PROJECT_SETTINGS = 'ProjectSettings',
+	PROJECTS_EXECUTIONS = 'ProjectsExecutions',
 }
 
 export const EDITABLE_CANVAS_VIEWS = [VIEWS.WORKFLOW, VIEWS.NEW_WORKFLOW, VIEWS.EXECUTION_DEBUG];
-
-export const enum FAKE_DOOR_FEATURES {
-	ENVIRONMENTS = 'environments',
-	LOGGING = 'logging',
-	SSO = 'sso',
-}
 
 export const TEST_PIN_DATA = [
 	{
@@ -515,6 +533,7 @@ export const MAPPING_PARAMS = [
 	'$input',
 	'$item',
 	'$jmespath',
+	'$fromAI',
 	'$json',
 	'$node',
 	'$now',
@@ -566,7 +585,7 @@ export const EnterpriseEditionFeature: Record<
 	AdvancedPermissions: 'advancedPermissions',
 };
 
-export const MAIN_NODE_PANEL_WIDTH = 360;
+export const MAIN_NODE_PANEL_WIDTH = 390;
 
 export const enum MAIN_HEADER_TABS {
 	WORKFLOW = 'workflow',
@@ -621,6 +640,7 @@ export const enum STORES {
 	NODE_TYPES = 'nodeTypes',
 	CREDENTIALS = 'credentials',
 	TAGS = 'tags',
+	ANNOTATION_TAGS = 'annotationTags',
 	VERSIONS = 'versions',
 	NODE_CREATOR = 'nodeCreator',
 	WEBHOOKS = 'webhooks',
@@ -628,7 +648,10 @@ export const enum STORES {
 	CLOUD_PLAN = 'cloudPlan',
 	RBAC = 'rbac',
 	PUSH = 'push',
+	COLLABORATION = 'collaboration',
+	ASSISTANT = 'assistant',
 	BECOME_TEMPLATE_CREATOR = 'becomeTemplateCreator',
+	PROJECTS = 'projects',
 }
 
 export const enum SignInType {
@@ -653,13 +676,6 @@ export const KEEP_AUTH_IN_NDV_FOR_NODES = [
 export const MAIN_AUTH_FIELD_NAME = 'authentication';
 export const NODE_RESOURCE_FIELD_NAME = 'resource';
 
-export const ASK_AI_EXPERIMENT = {
-	name: '011_ask_AI',
-	control: 'control',
-	gpt3: 'gpt3',
-	gpt4: 'gpt4',
-};
-
 export const TEMPLATE_CREDENTIAL_SETUP_EXPERIMENT = '017_template_credential_setup_v2';
 
 export const CANVAS_AUTO_ADD_MANUAL_TRIGGER_EXPERIMENT = {
@@ -668,10 +684,29 @@ export const CANVAS_AUTO_ADD_MANUAL_TRIGGER_EXPERIMENT = {
 	variant: 'variant',
 };
 
+export const AI_ASSISTANT_EXPERIMENT = {
+	name: '021_ai_debug_helper',
+	control: 'control',
+	variant: 'variant',
+};
+
+export const MORE_ONBOARDING_OPTIONS_EXPERIMENT = {
+	name: '022_more_onboarding_options',
+	control: 'control',
+	variant: 'variant',
+};
+
+export const CREDENTIAL_DOCS_EXPERIMENT = {
+	name: '024_credential_docs',
+	control: 'control',
+	variant: 'variant',
+};
 export const EXPERIMENTS_TO_TRACK = [
-	ASK_AI_EXPERIMENT.name,
 	TEMPLATE_CREDENTIAL_SETUP_EXPERIMENT,
 	CANVAS_AUTO_ADD_MANUAL_TRIGGER_EXPERIMENT.name,
+	AI_ASSISTANT_EXPERIMENT.name,
+	MORE_ONBOARDING_OPTIONS_EXPERIMENT.name,
+	CREDENTIAL_DOCS_EXPERIMENT.name,
 ];
 
 export const MFA_FORM = {
@@ -687,7 +722,11 @@ export const MFA_AUTHENTICATION_TOKEN_INPUT_MAX_LENGTH = 6;
 
 export const MFA_AUTHENTICATION_RECOVERY_CODE_INPUT_MAX_LENGTH = 36;
 
-export const NODE_TYPES_EXCLUDED_FROM_OUTPUT_NAME_APPEND = [FILTER_NODE_TYPE, SWITCH_NODE_TYPE];
+export const NODE_TYPES_EXCLUDED_FROM_OUTPUT_NAME_APPEND = [
+	FILTER_NODE_TYPE,
+	SWITCH_NODE_TYPE,
+	REMOVE_DUPLICATES_NODE_TYPE,
+];
 
 type ClearOutgoingConnectonsEvents = {
 	[nodeName: string]: {
@@ -819,14 +858,14 @@ export const ROLE = {
 export const INSECURE_CONNECTION_WARNING = `
 <body style="margin-top: 20px; font-family: 'Open Sans', sans-serif; text-align: center;">
 <h1 style="font-size: 40px">&#x1F6AB;</h1>
-<h2>Your n8n server is configured to use a secure cookie, <br/>however you are visiting this via an insecure URL
+<h2>Your n8n server is configured to use a secure cookie, <br/>however you are either visiting this via an insecure URL, or using Safari.
 </h2>
 <br/>
 <div style="font-size: 18px; max-width: 640px; text-align: left; margin: 10px auto">
 	To fix this, please consider the following options:
 	<ul>
 		<li>Setup TLS/HTTPS (<strong>recommended</strong>), or</li>
-		<li>If you are running this locally, try using <a href="http://localhost:5678">localhost</a> instead</li>
+		<li>If you are running this locally, and not using Safari, try using <a href="http://localhost:5678">localhost</a> instead</li>
 		<li>If you prefer to disable this security feature (<strong>not recommended</strong>), set the environment variable <code>N8N_SECURE_COOKIE</code> to <code>false</code></li>
 	</ul>
 </div>
@@ -836,6 +875,53 @@ export const INSECURE_CONNECTION_WARNING = `
  * Injection Keys
  */
 
+export const CanvasKey = 'canvas' as unknown as InjectionKey<CanvasInjectionData>;
 export const CanvasNodeKey = 'canvasNode' as unknown as InjectionKey<CanvasNodeInjectionData>;
 export const CanvasNodeHandleKey =
 	'canvasNodeHandle' as unknown as InjectionKey<CanvasNodeHandleInjectionData>;
+
+/** Auth */
+export const BROWSER_ID_STORAGE_KEY = 'n8n-browserId';
+
+export const APP_MODALS_ELEMENT_ID = 'app-modals';
+
+export const SAMPLE_SUBWORKFLOW_WORKFLOW_ID = '0';
+
+export const NEW_SAMPLE_WORKFLOW_CREATED_CHANNEL = 'new-sample-sub-workflow-created';
+
+export const SAMPLE_SUBWORKFLOW_WORKFLOW: IWorkflowDataCreate = {
+	name: 'My Sub-Workflow',
+	nodes: [
+		{
+			parameters: {},
+			id: 'c055762a-8fe7-4141-a639-df2372f30060',
+			name: 'Execute Workflow Trigger',
+			type: 'n8n-nodes-base.executeWorkflowTrigger',
+			position: [260, 340],
+		},
+		{
+			parameters: {},
+			id: 'b5942df6-0160-4ef7-965d-57583acdc8aa',
+			name: 'Replace me with your logic',
+			type: 'n8n-nodes-base.noOp',
+			position: [520, 340],
+		},
+	] as INodeUi[],
+	connections: {
+		'Execute Workflow Trigger': {
+			main: [
+				[
+					{
+						node: 'Replace me with your logic',
+						type: NodeConnectionType.Main,
+						index: 0,
+					},
+				],
+			],
+		},
+	},
+	settings: {
+		executionOrder: 'v1',
+	},
+	pinData: {},
+};

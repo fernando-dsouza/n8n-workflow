@@ -1,11 +1,12 @@
 import {
+	AI_TRANSFORM_NODE_TYPE,
 	CORE_NODES_CATEGORY,
 	WEBHOOK_NODE_TYPE,
 	OTHER_TRIGGER_NODES_SUBCATEGORY,
 	EXECUTE_WORKFLOW_TRIGGER_NODE_TYPE,
 	FORM_TRIGGER_NODE_TYPE,
 	MANUAL_TRIGGER_NODE_TYPE,
-	MANUAL_CHAT_TRIGGER_NODE_TYPE,
+	CHAT_TRIGGER_NODE_TYPE,
 	SCHEDULE_TRIGGER_NODE_TYPE,
 	REGULAR_NODE_CREATOR_VIEW,
 	TRANSFORM_DATA_SUBCATEGORY,
@@ -140,6 +141,10 @@ export function AIView(_nodes: SimplifiedNodeType[]): NodeView {
 	const chainNodes = getAiNodesBySubcategory(nodeTypesStore.allLatestNodeTypes, AI_CATEGORY_CHAINS);
 	const agentNodes = getAiNodesBySubcategory(nodeTypesStore.allLatestNodeTypes, AI_CATEGORY_AGENTS);
 
+	const websiteCategoryURL = templatesStore.websiteTemplateRepositoryParameters;
+
+	websiteCategoryURL.append('utm_user_role', 'AdvancedAI');
+
 	return {
 		value: AI_NODE_CREATOR_VIEW,
 		title: i18n.baseText('nodeCreator.aiPanel.aiNodes'),
@@ -153,7 +158,7 @@ export function AIView(_nodes: SimplifiedNodeType[]): NodeView {
 					icon: 'box-open',
 					description: i18n.baseText('nodeCreator.aiPanel.linkItem.description'),
 					name: 'ai_templates_root',
-					url: templatesStore.getWebsiteCategoryURL(undefined, 'AdvancedAI'),
+					url: websiteCategoryURL.toString(),
 					tag: {
 						type: 'info',
 						text: i18n.baseText('nodeCreator.triggerHelperPanel.manualTriggerTag'),
@@ -400,14 +405,14 @@ export function TriggerView() {
 				},
 			},
 			{
-				key: MANUAL_CHAT_TRIGGER_NODE_TYPE,
+				key: CHAT_TRIGGER_NODE_TYPE,
 				type: 'node',
 				category: [CORE_NODES_CATEGORY],
 				properties: {
 					group: [],
-					name: MANUAL_CHAT_TRIGGER_NODE_TYPE,
-					displayName: i18n.baseText('nodeCreator.triggerHelperPanel.manualChatTriggerDisplayName'),
-					description: i18n.baseText('nodeCreator.triggerHelperPanel.manualChatTriggerDescription'),
+					name: CHAT_TRIGGER_NODE_TYPE,
+					displayName: i18n.baseText('nodeCreator.triggerHelperPanel.chatTriggerDisplayName'),
+					description: i18n.baseText('nodeCreator.triggerHelperPanel.chatTriggerDescription'),
 					icon: 'fa:comments',
 				},
 			},
@@ -428,6 +433,13 @@ export function TriggerView() {
 
 export function RegularView(nodes: SimplifiedNodeType[]) {
 	const i18n = useI18n();
+
+	const popularItemsSubcategory = [
+		SET_NODE_TYPE,
+		CODE_NODE_TYPE,
+		DATETIME_NODE_TYPE,
+		AI_TRANSFORM_NODE_TYPE,
+	];
 
 	const view: NodeView = {
 		value: REGULAR_NODE_CREATOR_VIEW,
@@ -453,7 +465,7 @@ export function RegularView(nodes: SimplifiedNodeType[]) {
 						{
 							key: 'popular',
 							title: i18n.baseText('nodeCreator.sectionNames.popular'),
-							items: [SET_NODE_TYPE, CODE_NODE_TYPE, DATETIME_NODE_TYPE],
+							items: popularItemsSubcategory,
 						},
 						{
 							key: 'addOrRemove',

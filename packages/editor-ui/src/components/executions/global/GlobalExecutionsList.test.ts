@@ -39,6 +39,7 @@ const executionDataFactory = (): ExecutionSummary => ({
 	id: faker.string.uuid(),
 	finished: faker.datatype.boolean(),
 	mode: faker.helpers.arrayElement(['manual', 'trigger']),
+	createdAt: faker.date.past(),
 	startedAt: faker.date.past(),
 	stoppedAt: faker.date.past(),
 	workflowId: faker.number.int().toString(),
@@ -100,6 +101,9 @@ describe('GlobalExecutionsList', () => {
 		const { queryAllByTestId, queryByTestId, getByTestId } = renderComponent({
 			props: {
 				executions: [],
+				filters: {},
+				total: 0,
+				estimated: false,
 			},
 			pinia,
 		});
@@ -121,6 +125,8 @@ describe('GlobalExecutionsList', () => {
 					executions: executionsData[0].results,
 					total: executionsData[0].count,
 					filteredExecutions: executionsData[0].results,
+					filters: {},
+					estimated: false,
 				},
 				pinia,
 			});
@@ -185,6 +191,8 @@ describe('GlobalExecutionsList', () => {
 				executions: executionsData[0].results,
 				total: executionsData[0].count,
 				filteredExecutions: executionsData[0].results,
+				filters: {},
+				estimated: false,
 			},
 			pinia,
 		});

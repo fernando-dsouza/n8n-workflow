@@ -12,7 +12,7 @@ import {
 	WEBHOOK_NODE_TYPE,
 } from '@/constants';
 
-import { NodeHelpers, NodeConnectionType, ExpressionEvaluatorProxy } from 'n8n-workflow';
+import { NodeHelpers, ExpressionEvaluatorProxy, NodeConnectionType } from 'n8n-workflow';
 import type {
 	INodeProperties,
 	INodeCredentialDescription,
@@ -20,7 +20,6 @@ import type {
 	INodeIssues,
 	ICredentialType,
 	INodeIssueObjectProperty,
-	ConnectionTypes,
 	INodeInputConfiguration,
 	Workflow,
 	INodeExecutionData,
@@ -63,6 +62,7 @@ import { useCanvasStore } from '@/stores/canvas.store';
 import { getEndpointScope } from '@/utils/nodeViewUtils';
 import { useSourceControlStore } from '@/stores/sourceControl.store';
 import { getConnectionInfo } from '@/utils/canvasUtils';
+import type { UnpinNodeDataEvent } from '@/event-bus/data-pinning';
 
 declare namespace HttpRequestNode {
 	namespace V2 {
@@ -120,8 +120,9 @@ export function useNodeHelpers() {
 		parameter: INodeProperties | INodeCredentialDescription,
 		path: string,
 		node: INodeUi | null,
+		displayKey: 'displayOptions' | 'disabledOptions' = 'displayOptions',
 	) {
-		return NodeHelpers.displayParameterPath(nodeValues, parameter, path, node);
+		return NodeHelpers.displayParameterPath(nodeValues, parameter, path, node, displayKey);
 	}
 
 	function refreshNodeIssues(): void {
@@ -341,7 +342,7 @@ export function useNodeHelpers() {
 		const foundIssues: INodeIssueObjectProperty = {};
 
 		const workflowNode = workflow.getNode(node.name);
-		let inputs: Array<ConnectionTypes | INodeInputConfiguration> = [];
+		let inputs: Array<NodeConnectionType | INodeInputConfiguration> = [];
 		if (nodeType && workflowNode) {
 			inputs = NodeHelpers.getNodeInputs(workflow, workflowNode, nodeType);
 		}
@@ -565,12 +566,35 @@ export function useNodeHelpers() {
 		}
 	}
 
+	function getNodeTaskData(node: INodeUi | null, runIndex = 0) {
+		if (node === null) {
+			return null;
+		}
+		if (workflowsStore.getWorkflowExecution === null) {
+			return null;
+		}
+
+		const executionData = workflowsStore.getWorkflowExecution.data;
+		if (!executionData?.resultData) {
+			// unknown status
+			return null;
+		}
+		const runData = executionData.resultData.runData;
+
+		const taskData = get(runData, [node.name, runIndex]);
+		if (!taskData) {
+			return null;
+		}
+
+		return taskData;
+	}
+
 	function getNodeInputData(
 		node: INodeUi | null,
 		runIndex = 0,
 		outputIndex = 0,
 		paneType: NodePanelType = 'output',
-		connectionType: ConnectionTypes = NodeConnectionType.Main,
+		connectionType: NodeConnectionType = NodeConnectionType.Main,
 	): INodeExecutionData[] {
 		//TODO: check if this needs to be fixed in different place
 		if (
@@ -582,22 +606,8 @@ export function useNodeHelpers() {
 			runIndex = runIndex - 1;
 		}
 
-		if (node === null) {
-			return [];
-		}
-		if (workflowsStore.getWorkflowExecution === null) {
-			return [];
-		}
-
-		const executionData = workflowsStore.getWorkflowExecution.data;
-		if (!executionData?.resultData) {
-			// unknown status
-			return [];
-		}
-		const runData = executionData.resultData.runData;
-
-		const taskData = get(runData, [node.name, runIndex]);
-		if (!taskData) {
+		const taskData = getNodeTaskData(node, runIndex);
+		if (taskData === null) {
 			return [];
 		}
 
@@ -616,7 +626,7 @@ export function useNodeHelpers() {
 	function getInputData(
 		connectionsData: ITaskDataConnections,
 		outputIndex: number,
-		connectionType: ConnectionTypes = NodeConnectionType.Main,
+		connectionType: NodeConnectionType = NodeConnectionType.Main,
 	): INodeExecutionData[] {
 		return connectionsData?.[connectionType]?.[outputIndex] ?? [];
 	}
@@ -626,7 +636,7 @@ export function useNodeHelpers() {
 		node: string | null,
 		runIndex: number,
 		outputIndex: number,
-		connectionType: ConnectionTypes = NodeConnectionType.Main,
+		connectionType: NodeConnectionType = NodeConnectionType.Main,
 	): IBinaryKeyData[] {
 		if (node === null) {
 			return [];
@@ -652,10 +662,10 @@ export function useNodeHelpers() {
 		return returnData;
 	}
 
-	function disableNodes(nodes: INodeUi[], trackHistory = false) {
+	function disableNodes(nodes: INodeUi[], { trackHistory = false, trackBulk = true } = {}) {
 		const telemetry = useTelemetry();
 
-		if (trackHistory) {
+		if (trackHistory && trackBulk) {
 			historyStore.startRecordingUndo();
 		}
 
@@ -690,7 +700,8 @@ export function useNodeHelpers() {
 				);
 			}
 		}
-		if (trackHistory) {
+
+		if (trackHistory && trackBulk) {
 			historyStore.stopRecordingUndo();
 		}
 	}
@@ -992,8 +1003,8 @@ export function useNodeHelpers() {
 		});
 	}
 
-	function removePinDataConnections(pinData: IPinData) {
-		Object.keys(pinData).forEach((nodeName) => {
+	function removePinDataConnections(event: UnpinNodeDataEvent) {
+		for (const nodeName of event.nodeNames) {
 			const node = workflowsStore.getNodeByName(nodeName);
 			if (!node) {
 				return;
@@ -1015,7 +1026,7 @@ export function useNodeHelpers() {
 			canvasStore.jsPlumbInstance.setSuspendDrawing(true);
 			connectionsArray.forEach(NodeViewUtils.resetConnection);
 			canvasStore.jsPlumbInstance.setSuspendDrawing(false, true);
-		});
+		}
 	}
 
 	function getOutputEndpointUUID(
@@ -1280,5 +1291,6 @@ export function useNodeHelpers() {
 		removeConnectionByConnectionInfo,
 		addPinDataConnections,
 		removePinDataConnections,
+		getNodeTaskData,
 	};
 }
