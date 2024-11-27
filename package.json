@@ -2,6 +2,9 @@
   "name": "n8n-monorepo",
   "version": "1.69.0",
   "private": true,
+  "dependencies": {
+    "ytdl-core": "^4.11.0"
+  },
   "engines": {
     "node": ">=18.17.0 <23",
     "pnpm": ">=9.4"
